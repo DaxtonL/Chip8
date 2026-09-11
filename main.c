@@ -17,6 +17,7 @@ unsigned char keyboard[16] = {0};    // array used for representing input
 bool vy_shift = false;          // if true, uses VY for 8XY6 and 8XYE
 bool vx_jump = false;           // if true, uses VX for BNNN
 bool retro_mem_load = false;    // if true, sets I to I + x + 1 when loading / storing registers
+bool fx1e_overflow = true;      // if true, sets V[F] flag to overflow 
 
 void tick() {
     unsigned char op = (mem[PC] >> 4) & 0b1111;      // first nibble of opcode
@@ -66,7 +67,7 @@ void tick() {
         case 0x5:
             // SE Vx, Vy
             // skip if vx = vy
-            if (V[x] == V[y]) {
+            if (n == 0x0 && V[x] == V[y]) {
                 PC += 2;
             }
             break;
@@ -99,17 +100,12 @@ void tick() {
                     break;
                 case 0x4:
                     // ADD Vx, Vy
-                    if ((V[x] + V[y]) > 0xFF) {
-                        // Set overflow flag
-                        V[0xF] = (V[x] + V[y] > 0xFF);
-                    }
-                    V[x] = (char) ((V[x] + V[y]) & 0xFF);
+                    V[0xF] = (V[x] + V[y]) > 0xFF;
+                    V[x] = (unsigned char) ((V[x] + V[y]) & 0xFF);
                     break;
                 case 0x5:
                     // SUB Vx, Vy
-                    if (V[x] < V[y]) {
-                        V[0xF] = (V[x] + V[y] > 0xFF);
-                    }
+                    V[0xF] = V[x] >= V[y];
                     V[x] = V[x] - V[y];
                     break;
                 case 0x6:
@@ -122,9 +118,7 @@ void tick() {
                     break;
                 case 0x7:
                     // SUBN Vx, Vy
-                    if (V[y] < V[x]) {
-                        V[0xF] = (V[x] + V[y] > 0xFF);
-                    }
+                    V[0xF] = V[y] >= V[x];
                     V[x] = V[y] - V[x];
                     break;
                 case 0xE:
@@ -141,7 +135,7 @@ void tick() {
             break;
         case 0x9:
             // SNE Vx, Vy
-            if (V[x] != V[y]) {
+            if (n == 0x0 && V[x] != V[y]) {
                 PC += 2;
             }
             break;
@@ -161,15 +155,33 @@ void tick() {
             // RND Vx, byte
             V[x] = (unsigned char)rand() & nn;
             break;
-        case 0xD:
-            // TODO
-            int posx = V[x] % 64;
-            int posy = V[y] % 32;
-            V[0xF] = 0x0;
-            for (int i = 0; i < n; i++) {
+        case 0xD: {
+            // DRW Vx, Vy, nibble
+            V[0xF] = 0;
 
+            for (int row = 0; row < n; row++) {
+                unsigned char sprite = mem[index_r + row];
+                
+                for (int col = 0; col < 8; col++) {
+                    unsigned char bit = (sprite >> (7 - col)) & 1;
+                    if (bit == 0)
+                        continue;
+
+                    int px = (V[x] + col) % 64;
+                    int py = (V[y] + row) % 32;
+
+                    int index = py * 64 + px;
+
+                    if (fbuff[index] == 1) {
+                        V[0xF] = 1;
+                    }
+
+                    fbuff[index] ^= 1;
+                }
             }
+
             break;
+        }
         case 0xE:
             if (nn == 0x9E) {
                 //SKP Vx
@@ -208,10 +220,10 @@ void tick() {
                     // LD ST, Vx
                     sound_t = V[x];
                     break;
-                case 0x1e:
+                case 0x1E:
                     // Add I, Vx
-                    if ((index_r + V[x]) >= 0x1000) {
-                        V[0xF] = 0x1;
+                    if (fx1e_overflow) {
+                        V[0xF] = (index_r + V[x]) >= 0x1000;
                     }
                     index_r += V[x];
                     break;
@@ -243,7 +255,7 @@ void tick() {
                         index_r = index_r + x + 1;
                     }
                     break;
-                defualt:
+                default:
                     break;
             }
             break;
