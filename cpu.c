@@ -2,6 +2,57 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
+
+static const uint8_t fontset[80] = {
+    // 0
+    0xF0, 0x90, 0x90, 0x90, 0xF0,
+
+    // 1
+    0x20, 0x60, 0x20, 0x20, 0x70,
+
+    // 2
+    0xF0, 0x10, 0xF0, 0x80, 0xF0,
+
+    // 3
+    0xF0, 0x10, 0xF0, 0x10, 0xF0,
+
+    // 4
+    0x90, 0x90, 0xF0, 0x10, 0x10,
+
+    // 5
+    0xF0, 0x80, 0xF0, 0x10, 0xF0,
+
+    // 6
+    0xF0, 0x80, 0xF0, 0x90, 0xF0,
+
+    // 7
+    0xF0, 0x10, 0x20, 0x40, 0x40,
+
+    // 8
+    0xF0, 0x90, 0xF0, 0x90, 0xF0,
+
+    // 9
+    0xF0, 0x90, 0xF0, 0x10, 0xF0,
+
+    // A
+    0xF0, 0x90, 0xF0, 0x90, 0x90,
+
+    // B
+    0xE0, 0x90, 0xE0, 0x90, 0xE0,
+
+    // C
+    0xF0, 0x80, 0x80, 0x80, 0xF0,
+
+    // D
+    0xE0, 0x90, 0x90, 0x90, 0xE0,
+
+    // E
+    0xF0, 0x80, 0xF0, 0x80, 0xF0,
+
+    // F
+    0xF0, 0x80, 0xF0, 0x80, 0x80
+};
 
 typedef struct {
     uint8_t V[16];                      // 8 bit registers V0-VF
@@ -40,6 +91,7 @@ void initCPU(CPU *cpu) {
     *cpu = (CPU){0};
     cpu->fx1e_overflow = true;
     cpu->PC = 0x200;
+    memcpy(cpu->mem, fontset, sizeof(fontset));
 }
 
 void tick(CPU *cpu) {
@@ -56,6 +108,14 @@ void tick(CPU *cpu) {
 
     // Move to next instruction
     cpu->PC += 2;
+
+    if (cpu->delay_t > 0) {
+        cpu->delay_t -= 1;
+    }
+
+    if (cpu->sound_t > 0) {
+        cpu->sound_t -= 1;
+    }
 
     switch ((opA >> 4) & 0x0F) {
 
@@ -372,6 +432,31 @@ void tick(CPU *cpu) {
             break;
     }
 }
+
+bool chip8_load_rom(CPU *chip8, const char *filename)
+{
+    FILE *file = fopen(filename, "rb");
+
+    if (file == NULL)
+    {
+        printf("Could not open ROM: %s\n", filename);
+        return false;
+    }
+
+    size_t bytes_read = fread(
+        &chip8->mem[0x200],
+        1,
+        sizeof(chip8->mem) - 0x200,
+        file
+    );
+
+    fclose(file);
+
+    printf("Loaded %zu bytes from %s\n", bytes_read, filename);
+
+    return true;
+}
+
 
 
 
