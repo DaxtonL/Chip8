@@ -64,7 +64,7 @@ typedef struct {
     uint8_t fbuff[64 * 32];             // 64x32 bit frame buffer
     uint16_t PC;                        // 16 bit program counter
     uint8_t mem[4096];                  // 4096 bytes of addressable memory (free memory starts at 0x200)
-    uint8_t keyboard[16];               // array used for representing input
+    uint8_t keypad[16];               // array used for representing input
 
     // FLAGS
     bool vy_shift;                      // if true, uses VY for 8XY6 and 8XYE
@@ -320,13 +320,13 @@ void tick(CPU *cpu) {
         case 0xE:
             if (nn == 0x9E) {
                 // SKP Vx
-                if (cpu->keyboard[cpu->V[x]] == 1) {
+                if (cpu->keypad[cpu->V[x]] == 1) {
                     cpu->PC += 2;
                 }
             }
             else if (nn == 0xA1) {
                 // SKNP Vx
-                if (cpu->keyboard[cpu->V[x]] == 0) {
+                if (cpu->keypad[cpu->V[x]] == 0) {
                     cpu->PC += 2;
                 }
             }
@@ -346,8 +346,8 @@ void tick(CPU *cpu) {
                     // LD Vx, K
                     cpu->PC -= 2;
 
-                    for (int i = 0; i < sizeof(cpu->keyboard); i++) {
-                        if (cpu->keyboard[i] == 1) {
+                    for (int i = 0; i < sizeof(cpu->keypad); i++) {
+                        if (cpu->keypad[i] == 1) {
                             cpu->V[x] = i;
                             cpu->PC += 2;
                             break;
