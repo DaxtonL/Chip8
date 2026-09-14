@@ -64,7 +64,7 @@ typedef struct {
     uint8_t fbuff[64 * 32];             // 64x32 bit frame buffer
     uint16_t PC;                        // 16 bit program counter
     uint8_t mem[4096];                  // 4096 bytes of addressable memory (free memory starts at 0x200)
-    uint8_t keypad[16];               // array used for representing input
+    uint8_t keypad[16];                 // array used for representing input
 
     // FLAGS
     bool vy_shift;                      // if true, uses VY for 8XY6 and 8XYE
@@ -73,20 +73,6 @@ typedef struct {
     bool fx1e_overflow;                 // if true, sets V[F] flag to overflow 
 } CPU;
 
-
-// unsigned short index_r = 0;          
-// unsigned short stack[64] = {0};      // 64 byte stack
-// unsigned char s_pointer = 0;         // 8 bit stack pointer
-
-// unsigned char delay_t = 0;           // 8 bit delay timer
-// unsigned char sound_t = 0;           // 8 bit sound timer
-
-// unsigned char fbuff[64 * 32] = {0};  // 64x32 bit frame buffer
-// unsigned short PC = 0x200;           // 16 bit program counter
-// unsigned char mem[4096] = {0};       // 4096 bytes of addressable memory (free memory starts at 0x200)
-// unsigned char keyboard[16] = {0};    // array used for representing input
-
-// Initializer, sets all values aside from PC to 0
 void initCPU(CPU *cpu) {
     *cpu = (CPU){0};
     cpu->fx1e_overflow = true;
@@ -109,20 +95,12 @@ void tick(CPU *cpu) {
     // Move to next instruction
     cpu->PC += 2;
 
-    if (cpu->delay_t > 0) {
-        cpu->delay_t -= 1;
-    }
-
-    if (cpu->sound_t > 0) {
-        cpu->sound_t -= 1;
-    }
-
     switch ((opA >> 4) & 0x0F) {
 
         case 0x0:
             if (nn == 0xE0) {
                 // CLS
-                for (int i = 0; i < sizeof(cpu->fbuff); i++) {
+                for (size_t i = 0; i < sizeof(cpu->fbuff); i++) {
                     cpu->fbuff[i] = 0;
                 }
             }
@@ -346,7 +324,7 @@ void tick(CPU *cpu) {
                     // LD Vx, K
                     cpu->PC -= 2;
 
-                    for (int i = 0; i < sizeof(cpu->keypad); i++) {
+                    for (size_t i = 0; i < sizeof(cpu->keypad); i++) {
                         if (cpu->keypad[i] == 1) {
                             cpu->V[x] = i;
                             cpu->PC += 2;

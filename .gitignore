@@ -1,0 +1,10 @@
+# Build files
+build/
+*.o
+
+# CHIP-8 ROMs
+roms/
+*.ch8
+
+# macOS
+.DS_Store
