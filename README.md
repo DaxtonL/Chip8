@@ -18,32 +18,6 @@ Install the dependencies using Homebrew:
 brew install sdl2 pkg-config
 ```
 
-You can verify SDL2 is available with:
-
-```bash
-pkg-config --cflags --libs sdl2
-```
-
----
-
-## Project Structure
-
-```text
-chip8c/
-├── Makefile
-├── .gitignore
-├── src/
-│   ├── cpu.c
-│   ├── cpu.h
-│   ├── main.c
-│   ├── render.c
-│   └── render.h
-├── build/
-└── roms/
-```
-
-ROM files are intentionally excluded from Git.
-
 ---
 
 # Using the Makefile
@@ -112,43 +86,6 @@ You can run:
 make run pong.ch8
 ```
 
-or:
-
-```bash
-make run test.ch8
-```
-
----
-
-## Clean the Build
-
-To remove all compiled files:
-
-```bash
-make clean
-```
-
-This removes the contents of the `build/` directory.
-
-After cleaning, running:
-
-```bash
-make
-```
-
-will perform a full rebuild.
-
----
-
-# Makefile Commands
-
-| Command          | Description           |
-| ---------------- | --------------------- |
-| `make`           | Build the emulator    |
-| `make all`       | Build the emulator    |
-| `make run <rom>` | Build and run a ROM   |
-| `make clean`     | Remove compiled files |
-
 ---
 
 # ROMs
@@ -162,7 +99,7 @@ roms/
 For example:
 
 ```text
-roms/ibm.ch8
+roms/pong.ch8
 ```
 
 ROM files are excluded from version control through `.gitignore`.
@@ -184,21 +121,6 @@ A 0 B F      Z X C V
 
 ---
 
-# Development
-
-Source code is located in `src/`.
-
-The CPU implementation is separated from SDL rendering:
-
-* `cpu.c` / `cpu.h` — CHIP-8 CPU, memory, registers, instructions, timers
-* `render.c` / `render.h` — SDL window, rendering, and keyboard input
-* `main.c` — emulator initialization and main timing loop
-
-Compiled object files and the final executable are placed in `build/`.
-
-The Makefile automatically finds `.c` files in `src/`, so adding another source file there will automatically include it in the build.
-
----
 
 # License
 
